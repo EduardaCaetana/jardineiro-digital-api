@@ -1,5 +1,6 @@
 # app/main.py
 from fastapi import FastAPI, Depends, HTTPException
+from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession
 from contextlib import asynccontextmanager
 from . import crud, models, schemas

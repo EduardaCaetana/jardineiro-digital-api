@@ -1,8 +1,11 @@
 # app/main.py
 from fastapi import FastAPI, Depends, HTTPException
+from fastapi.responses import RedirectResponse
 from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession
 from contextlib import asynccontextmanager
+
+from streamlit import status
 from . import crud, models, schemas
 from .database import engine, get_db, AsyncSessionLocal
 import datetime
@@ -44,6 +47,15 @@ async def criar_jardineiro(jardineiro: schemas.JardineiroCreate, db: AsyncSessio
     if db_jardineiro:
         raise HTTPException(status_code=400, detail="Email já cadastrado.")
     return await crud.create_jardineiro(db=db, jardineiro=jardineiro)
+
+@app.get("/jardineiros", include_in_schema=False)
+def redirect_to_jardineiros_slash():
+    return RedirectResponse("/jardineiros/", status_code=status.HTTP_308_PERMANENT_REDIRECT)
+
+@app.get("/jardineiros/", response_model=list[schemas.Jardineiro], tags=["Jardineiros"])
+async def ler_jardineiros(skip: int = 0, limit: int = 100, db: AsyncSession = Depends(get_db)):
+    jardineiros = await crud.get_jardineiros(db, skip=skip, limit=limit)
+    return jardineiros
 
 # Endpoints para Especies
 @app.post("/especies/", response_model=schemas.Especie, tags=["Espécies"])

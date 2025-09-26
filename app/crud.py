@@ -13,6 +13,15 @@ async def create_jardineiro(db: AsyncSession, jardineiro: schemas.JardineiroCrea
     await db.refresh(db_jardineiro)
     return db_jardineiro
 
+async def get_jardineiros(db: AsyncSession, skip: int = 0, limit: int = 100):
+    result = await db.execute(
+        select(models.Jardineiro)
+        .options(selectinload(models.Jardineiro.plantas))
+        .offset(skip)
+        .limit(limit)
+    )
+    return result.scalars().all()
+
 async def get_jardineiro_by_email(db: AsyncSession, email: str):
     result = await db.execute(select(models.Jardineiro).filter(models.Jardineiro.email == email))
     return result.scalars().first()
@@ -30,12 +39,24 @@ async def get_especies(db: AsyncSession):
     return result.scalars().all()
 
 # CRUD para PlantaCadastrada
+# app/crud.py
+
+# ... (o resto do arquivo fica igual) ...
+
 async def create_planta_para_jardineiro(db: AsyncSession, planta: schemas.PlantaCadastradaCreate, jardineiro_id: int):
     db_planta = models.PlantaCadastrada(**planta.model_dump(), dono_id=jardineiro_id)
     db.add(db_planta)
     await db.commit()
     await db.refresh(db_planta)
-    return db_planta
+    result = await db.execute(
+        select(models.PlantaCadastrada)
+        .options(
+            selectinload(models.PlantaCadastrada.especie), 
+            selectinload(models.PlantaCadastrada.tarefas)
+        )
+        .filter(models.PlantaCadastrada.id == db_planta.id)
+    )
+    return result.scalars().first()
     
 async def get_plantas_do_jardineiro(db: AsyncSession, jardineiro_id: int):
     result = await db.execute(

@@ -7,7 +7,7 @@ let acervoCompleto = [];
 // --- SELETORES DE ELEMENTOS DO HTML ---
 const plantasGrid = document.getElementById('plantas-grid');
 const form = document.getElementById('planta-form');
-const plantaIdInput = document.getElementById('planta-id');
+// O seletor do 'planta-id' foi removido
 const nomePopularInput = document.getElementById('nome_popular');
 const nomeCientificoInput = document.getElementById('nome_cientifico');
 const familiaInput = document.getElementById('familia');
@@ -31,15 +31,14 @@ const fetchPlantas = async () => {
     }
 };
 
-// SALVAR (Criar ou Atualizar) uma planta
-const savePlanta = async (event) => {
+// INCLUIR uma nova planta
+const addPlanta = async (event) => {
     event.preventDefault();
     if (!form.checkValidity()) {
         alert("Por favor, preencha todos os campos obrigatórios.");
         return;
     }
 
-    const id = plantaIdInput.value;
     const plantaData = {
         nome_popular: nomePopularInput.value,
         nome_cientifico: nomeCientificoInput.value,
@@ -48,22 +47,19 @@ const savePlanta = async (event) => {
         cuidados: cuidadosInput.value,
     };
 
-    const method = id ? 'PUT' : 'POST';
-    const url = id ? `${API_URL}/plantas/${id}` : `${API_URL}/plantas/`;
-
     try {
-        const response = await fetch(url, {
-            method: method,
+        const response = await fetch(`${API_URL}/plantas/`, {
+            method: 'POST',
             headers: { 'Content-Type': 'application/json' },
             body: JSON.stringify(plantaData),
         });
-        if (!response.ok) throw new Error(`Erro ao ${id ? 'atualizar' : 'adicionar'} planta`);
+        if (!response.ok) throw new Error('Erro ao adicionar planta');
         
-        clearForm();
-        fetchPlantas();
+        form.reset(); // Limpa o formulário
+        fetchPlantas(); // Atualiza a lista
     } catch (error) {
-        console.error(`Falha ao salvar planta:`, error);
-        alert('Não foi possível salvar a planta.');
+        console.error(`Falha ao adicionar planta:`, error);
+        alert('Não foi possível adicionar a planta.');
     }
 };
 
@@ -73,7 +69,7 @@ const deletePlanta = async (id) => {
     try {
         const response = await fetch(`${API_URL}/plantas/${id}`, { method: 'DELETE' });
         if (!response.ok) throw new Error('Erro ao deletar planta');
-        fetchPlantas();
+        fetchPlantas(); // Atualiza a lista
     } catch (error) {
         console.error(`Falha ao deletar planta:`, error);
         alert('Não foi possível deletar a planta.');
@@ -82,26 +78,19 @@ const deletePlanta = async (id) => {
 
 // --- FUNÇÕES DA INTERFACE ---
 
+// A função 'prepareEdit' foi removida
+// A função 'clearForm' foi simplificada para ser apenas o reset do form
 const clearForm = () => {
-    plantaIdInput.value = '';
     form.reset();
 };
 
-const prepareEdit = (planta) => {
-    plantaIdInput.value = planta.id;
-    nomePopularInput.value = planta.nome_popular;
-    nomeCientificoInput.value = planta.nome_cientifico;
-    familiaInput.value = planta.familia;
-    origemInput.value = planta.origem;
-    cuidadosInput.value = planta.cuidados;
-    form.scrollIntoView({ behavior: 'smooth' });
-};
-
+// Mostra as plantas na tela
 const displayPlantas = (plantas) => {
     plantasGrid.innerHTML = '';
     plantas.forEach(planta => {
         const card = document.createElement('div');
         card.className = 'planta-card';
+        // O botão 'Editar' foi removido do HTML do card
         card.innerHTML = `
             <div class="card-content">
                 <h3>${planta.nome_popular}</h3>
@@ -111,12 +100,10 @@ const displayPlantas = (plantas) => {
                 <div class="cuidados"><strong>Cuidados:</strong> ${planta.cuidados}</div>
             </div>
             <div class="card-actions">
-                <button class="btn-edit">Editar</button>
                 <button class="btn-delete">Excluir</button>
             </div>
         `;
-        // Adiciona os eventos nos botões de cada card
-        card.querySelector('.btn-edit').addEventListener('click', () => prepareEdit(planta));
+        // Adiciona o evento apenas no botão de excluir
         card.querySelector('.btn-delete').addEventListener('click', () => deletePlanta(planta.id));
         plantasGrid.appendChild(card);
     });
@@ -134,6 +121,6 @@ const handleSearch = (event) => {
 
 // --- EVENT LISTENERS ---
 document.addEventListener('DOMContentLoaded', fetchPlantas);
-form.addEventListener('submit', savePlanta);
+form.addEventListener('submit', addPlanta); // Agora o submit sempre adiciona
 clearBtn.addEventListener('click', clearForm);
 searchInput.addEventListener('input', handleSearch);

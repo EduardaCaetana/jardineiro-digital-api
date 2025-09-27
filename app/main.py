@@ -1,97 +1,96 @@
-# app/main.py
 from fastapi import FastAPI, Depends, HTTPException
-from fastapi.responses import RedirectResponse
-from sqlalchemy import select
-from sqlalchemy.ext.asyncio import AsyncSession
-from contextlib import asynccontextmanager
+from sqlalchemy.orm import Session
+from fastapi.middleware.cors import CORSMiddleware
+from typing import List
+from . import models, schemas
+from .database import engine, SessionLocal
 
-from streamlit import status
-from . import crud, models, schemas
-from .database import engine, get_db, AsyncSessionLocal
-import datetime
+# --- LÓGICA DE SEEDING (Banco Pré-Cadastrado) ---
+def seed_db():
+    db = SessionLocal()
+    try:
+        if db.query(models.Planta).count() == 0:
+            print("Enciclopédia vazia. Semeando com dados iniciais...")
+            plantas_iniciais = [
+                models.Planta(nome_popular="Jiboia", nome_cientifico="Epipremnum aureum", familia="Araceae", origem="Ilhas Salomão", cuidados="Manter o solo úmido, mas não encharcado. Gosta de luz indireta. Tóxica para pets."),
+                models.Planta(nome_popular="Espada-de-São-Jorge", nome_cientifico="Dracaena trifasciata", familia="Asparagaceae", origem="África", cuidados="Muito resistente. Regar apenas quando o solo estiver bem seco. Purifica o ar."),
+                models.Planta(nome_popular="Costela-de-Adão", nome_cientifico="Monstera deliciosa", familia="Araceae", origem="México", cuidados="Luz indireta e solo levemente úmido. Limpar as folhas com um pano úmido para remover poeira."),
+                models.Planta(nome_popular="Suculenta Orelha-de-Shrek", nome_cientifico="Crassula ovata 'Gollum'", familia="Crassulaceae", origem="África do Sul", cuidados="Ama sol pleno e pouquíssima água. Deixar o solo secar completamente entre as regas."),
+                models.Planta(nome_popular="Samambaia", nome_cientifico="Nephrolepis exaltata", familia="Lomariopsidaceae", origem="Regiões tropicais", cuidados="Gosta de muita umidade e sombra. Borrife água nas folhas regularmente e mantenha o solo sempre úmido.")
+            ]
+            db.add_all(plantas_iniciais)
+            db.commit()
+            print("Semeadura completa.")
+        else:
+            print("Enciclopédia já contém dados. Semeadura ignorada.")
+    finally:
+        db.close()
 
-# Função para popular o banco com algumas espécies iniciais
-async def popular_banco():
-    async with AsyncSessionLocal() as db:
-        especies_iniciais = [
-            {"nome_popular": "Jiboia", "nome_cientifico": "Epipremnum aureum", "instrucoes_de_cuidado": "Manter o solo úmido, mas não encharcado. Gosta de luz indireta.", "frequencia_rega_dias": 7},
-            {"nome_popular": "Espada-de-São-Jorge", "nome_cientifico": "Dracaena trifasciata", "instrucoes_de_cuidado": "Muito resistente. Regar apenas quando o solo estiver bem seco.", "frequencia_rega_dias": 15},
-            {"nome_popular": "Samambaia", "nome_cientifico": "Nephrolepis exaltata", "instrucoes_de_cuidado": "Gosta de muita umidade. Borrife água nas folhas.", "frequencia_rega_dias": 3},
-        ]
-        for especie_data in especies_iniciais:
-            # Verifica se a espécie já existe antes de adicionar
-            result = await db.execute(select(models.Especie).filter_by(nome_popular=especie_data["nome_popular"]))
-            if not result.scalars().first():
-                db_especie = models.Especie(**especie_data)
-                db.add(db_especie)
-        await db.commit()
+models.Base.metadata.create_all(bind=engine)
+seed_db()
+# --- FIM DA LÓGICA DE SEEDING ---
 
-@asynccontextmanager
-async def lifespan(app: FastAPI):
-    async with engine.begin() as conn:
-        await conn.run_sync(models.Base.metadata.create_all)
-    await popular_banco()
-    yield
+app = FastAPI(title="Enciclopédia Botânica Colaborativa API")
 
-app = FastAPI(
-    title="Jardineiro Digital API",
-    description="Uma API para ajudar a cuidar das suas plantas.",
-    version="1.0.0",
-    lifespan=lifespan
+# Bloco do CORS
+origins = ["http://127.0.0.1:5500", "null"]
+app.add_middleware(
+    CORSMiddleware,
+    allow_origins=origins,
+    allow_credentials=True,
+    allow_methods=["*"],
+    allow_headers=["*"],
 )
 
-# Endpoints para Jardineiro
-@app.post("/jardineiros/", response_model=schemas.Jardineiro, tags=["Jardineiros"])
-async def criar_jardineiro(jardineiro: schemas.JardineiroCreate, db: AsyncSession = Depends(get_db)):
-    db_jardineiro = await crud.get_jardineiro_by_email(db, email=jardineiro.email)
-    if db_jardineiro:
-        raise HTTPException(status_code=400, detail="Email já cadastrado.")
-    return await crud.create_jardineiro(db=db, jardineiro=jardineiro)
+# Função get_db
+def get_db():
+    db = SessionLocal()
+    try:
+        yield db
+    finally:
+        db.close()
 
-@app.get("/jardineiros", include_in_schema=False)
-def redirect_to_jardineiros_slash():
-    return RedirectResponse("/jardineiros/", status_code=status.HTTP_308_PERMANENT_REDIRECT)
+# --- ENDPOINTS PÚBLICOS DA ENCICLOPÉDIA ---
 
-@app.get("/jardineiros/", response_model=list[schemas.Jardineiro], tags=["Jardineiros"])
-async def ler_jardineiros(skip: int = 0, limit: int = 100, db: AsyncSession = Depends(get_db)):
-    jardineiros = await crud.get_jardineiros(db, skip=skip, limit=limit)
-    return jardineiros
+@app.post("/plantas/", response_model=schemas.Planta, status_code=201, tags=["Enciclopédia"])
+def create_planta(planta: schemas.PlantaCreate, db: Session = Depends(get_db)):
+    db_planta = models.Planta(**planta.model_dump())
+    db.add(db_planta)
+    db.commit()
+    db.refresh(db_planta)
+    return db_planta
 
-# Endpoints para Especies
-@app.post("/especies/", response_model=schemas.Especie, tags=["Espécies"])
-async def criar_especie(especie: schemas.EspecieCreate, db: AsyncSession = Depends(get_db)):
-    return await crud.create_especie(db=db, especie=especie)
+@app.get("/plantas/", response_model=List[schemas.Planta], tags=["Enciclopédia"])
+def read_plantas(skip: int = 0, limit: int = 100, db: Session = Depends(get_db)):
+    plantas = db.query(models.Planta).order_by(models.Planta.id).offset(skip).limit(limit).all()
+    return plantas
 
-@app.get("/especies/", response_model=list[schemas.Especie], tags=["Espécies"])
-async def ler_especies(db: AsyncSession = Depends(get_db)):
-    return await crud.get_especies(db)
+@app.get("/plantas/{planta_id}", response_model=schemas.Planta, tags=["Enciclopédia"])
+def read_planta(planta_id: int, db: Session = Depends(get_db)):
+    db_planta = db.query(models.Planta).filter(models.Planta.id == planta_id).first()
+    if db_planta is None:
+        raise HTTPException(status_code=404, detail="Planta não encontrada na enciclopédia")
+    return db_planta
 
-# Endpoints para Plantas Cadastradas
-@app.post("/jardineiros/{jardineiro_id}/plantas/", response_model=schemas.PlantaCadastrada, tags=["Minhas Plantas"])
-async def criar_planta_para_jardineiro(jardineiro_id: int, planta: schemas.PlantaCadastradaCreate, db: AsyncSession = Depends(get_db)):
-    return await crud.create_planta_para_jardineiro(db=db, planta=planta, jardineiro_id=jardineiro_id)
+@app.put("/plantas/{planta_id}", response_model=schemas.Planta, tags=["Enciclopédia"])
+def update_planta(planta_id: int, planta_update: schemas.PlantaUpdate, db: Session = Depends(get_db)):
+    db_planta = db.query(models.Planta).filter(models.Planta.id == planta_id).first()
+    if db_planta is None:
+        raise HTTPException(status_code=404, detail="Planta não encontrada na enciclopédia")
     
-@app.get("/jardineiros/{jardineiro_id}/plantas/", response_model=list[schemas.PlantaCadastrada], tags=["Minhas Plantas"])
-async def ler_plantas_do_jardineiro(jardineiro_id: int, db: AsyncSession = Depends(get_db)):
-    return await crud.get_plantas_do_jardineiro(db=db, jardineiro_id=jardineiro_id)
-
-# Endpoints para Tarefas
-@app.post("/plantas/{planta_id}/tarefas/", response_model=schemas.TarefaDeCuidado, tags=["Tarefas de Cuidado"])
-async def registrar_tarefa_de_cuidado(planta_id: int, tarefa: schemas.TarefaDeCuidadoCreate, db: AsyncSession = Depends(get_db)):
-    return await crud.log_tarefa_cuidado(db=db, tarefa=tarefa, planta_id=planta_id)
-
-# Endpoint especial da "Funcionalidade UAU"
-@app.get("/plantas/{planta_id}/proxima_rega/", response_model=schemas.ProximaRega, tags=["Lógica Inteligente"])
-async def calcular_proxima_rega(planta_id: int, db: AsyncSession = Depends(get_db)):
-    planta = await crud.get_planta_by_id(db, planta_id=planta_id)
-    if not planta:
-        raise HTTPException(status_code=404, detail="Planta não encontrada.")
-    
-    ultima_rega = await crud.get_ultima_rega(db, planta_id=planta_id)
-    if not ultima_rega:
-        return {"proxima_rega_em": None, "mensagem": "Esta planta nunca foi regada. Que tal regar agora?"}
+    update_data = planta_update.model_dump()
+    for key, value in update_data.items():
+        setattr(db_planta, key, value)
         
-    frequencia = planta.especie.frequencia_rega_dias
-    proxima_data = ultima_rega.data_execucao.date() + datetime.timedelta(days=frequencia)
-    
-    return {"proxima_rega_em": proxima_data, "mensagem": f"Baseado na última rega, a próxima será em {proxima_data.strftime('%d/%m/%Y')}."}
+    db.commit()
+    db.refresh(db_planta)
+    return db_planta
+
+@app.delete("/plantas/{planta_id}", response_model=schemas.Planta, tags=["Enciclopédia"])
+def delete_planta(planta_id: int, db: Session = Depends(get_db)):
+    db_planta = db.query(models.Planta).filter(models.Planta.id == planta_id).first()
+    if db_planta is None:
+        raise HTTPException(status_code=404, detail="Planta não encontrada na enciclopédia")
+    db.delete(db_planta)
+    db.commit()
+    return db_planta

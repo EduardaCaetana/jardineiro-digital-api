@@ -1,0 +1,65 @@
+<!DOCTYPE html>
+<html lang="pt-br">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Enciclopédia Botânica</title>
+    <meta name="description" content="Consulte e contribua para uma enciclopédia de plantas.">
+    <link rel="stylesheet" href="style.css">
+    <link href="https://fonts.googleapis.com/css2?family=Merriweather:wght@400;700&family=Roboto:wght@400;500&display=swap" rel="stylesheet">
+</head>
+<body>
+    <nav class="navbar">
+        <div class="container">
+            <a href="#" class="brand">🌿 Enciclopédia Botânica</a>
+        </div>
+    </nav>
+
+    <main class="container">
+        <div class="main-content">
+            <section class="plantas-section">
+                <div class="header-section">
+                    <h2>Consulte o Acervo</h2>
+                    <input type="search" id="search-input" placeholder="Buscar por nome popular, científico, família...">
+                </div>
+                <div id="plantas-grid">
+                    </div>
+            </section>
+
+            <aside class="form-section">
+                <h2>Contribuir</h2>
+                <p>Adicione uma nova planta à enciclopédia ou edite uma existente.</p>
+                <form id="planta-form">
+                    <input type="hidden" id="planta-id">
+                    <div class="form-group">
+                        <label for="nome_popular">Nome Popular</label>
+                        <input type="text" id="nome_popular" required>
+                    </div>
+                    <div class="form-group">
+                        <label for="nome_cientifico">Nome Científico</label>
+                        <input type="text" id="nome_cientifico" required>
+                    </div>
+                    <div class="form-group">
+                        <label for="familia">Família</label>
+                        <input type="text" id="familia" required>
+                    </div>
+                    <div class="form-group">
+                        <label for="origem">Origem</label>
+                        <input type="text" id="origem" required>
+                    </div>
+                    <div class="form-group">
+                        <label for="cuidados">Instruções de Cuidado</label>
+                        <textarea id="cuidados" rows="4" required></textarea>
+                    </div>
+                    <div class="form-buttons">
+                        <button type="submit" class="btn-save">Salvar Contribuição</button>
+                        <button type="button" class="btn-clear" id="clear-btn">Limpar</button>
+                    </div>
+                </form>
+            </aside>
+        </div>
+    </main>
+    
+    <script src="script.js"></script>
+</body>
+</html>

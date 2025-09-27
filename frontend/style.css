@@ -1,0 +1,93 @@
+:root {
+    --primary-color: #386641;
+    --secondary-color: #6A994E;
+    --background-color: #F2E8CF;
+    --text-color: #333;
+    --white: #fff;
+    --shadow: 0 4px 12px rgba(0,0,0,0.1);
+}
+
+* { margin: 0; padding: 0; box-sizing: border-box; }
+body { font-family: 'Roboto', sans-serif; background-color: var(--background-color); color: var(--text-color); }
+h1, h2, h3 { font-family: 'Merriweather', serif; }
+.container { max-width: 1400px; margin: 0 auto; padding: 1.5rem; }
+
+/* Navegação */
+.navbar { background-color: var(--primary-color); color: var(--white); box-shadow: var(--shadow); }
+.navbar .brand { color: var(--white); text-decoration: none; font-weight: 700; font-size: 1.5rem; }
+
+/* Layout Principal com Grid */
+.main-content {
+    display: grid;
+    grid-template-columns: 2fr 1fr;
+    gap: 2.5rem;
+    margin-top: 2rem;
+    align-items: flex-start;
+}
+@media (max-width: 992px) { .main-content { grid-template-columns: 1fr; } }
+
+/* Seção da Lista de Plantas */
+.header-section { margin-bottom: 1.5rem; }
+.header-section h2 { color: var(--primary-color); }
+#search-input {
+    width: 100%;
+    padding: 0.8rem;
+    margin-top: 1rem;
+    border: 1px solid #ddd;
+    border-radius: 4px;
+    font-size: 1rem;
+}
+
+#plantas-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
+    gap: 1.5rem;
+}
+
+.planta-card {
+    background: var(--white);
+    border-radius: 8px;
+    box-shadow: var(--shadow);
+    overflow: hidden;
+    border-top: 5px solid var(--secondary-color);
+    transition: transform 0.2s ease, box-shadow 0.2s ease;
+}
+.planta-card:hover { transform: translateY(-5px); box-shadow: 0 8px 16px rgba(0,0,0,0.15); }
+
+.card-content { padding: 1.5rem; }
+.card-content h3 { color: var(--primary-color); margin-bottom: 0.5rem; }
+.card-content p { font-size: 0.9rem; line-height: 1.5; margin-bottom: 1rem; }
+.card-content p strong { color: var(--primary-color); }
+.card-content .cuidados {
+    background: #f9f9f9;
+    padding: 1rem;
+    border-radius: 4px;
+    font-style: italic;
+}
+
+.card-actions { padding: 0 1.5rem 1.5rem; display: flex; gap: 0.5rem; }
+.card-actions button { font-size: 0.8rem; padding: 0.4rem 0.8rem; border-radius: 20px; cursor: pointer; border: 1px solid; }
+.btn-edit { border-color: #FFA000; color: #FFA000; background: #FFF9C4; }
+.btn-delete { border-color: #D32F2F; color: #D32F2F; background: #FFCDD2; }
+
+/* Seção do Formulário (Sidebar) */
+.form-section {
+    background: var(--white);
+    padding: 2rem;
+    border-radius: 8px;
+    box-shadow: var(--shadow);
+    position: sticky;
+    top: 2rem;
+}
+.form-section p { margin: -1rem 0 1.5rem; font-size: 0.9rem; color: #666; }
+.form-group { margin-bottom: 1rem; }
+.form-group label { display: block; margin-bottom: 0.5rem; font-weight: 500; }
+.form-group input, .form-group textarea {
+    width: 100%; padding: 0.8rem; border: 1px solid #ddd; border-radius: 4px; font-size: 1rem;
+}
+.form-buttons { display: flex; gap: 1rem; margin-top: 1.5rem; }
+.form-buttons button {
+    flex: 1; padding: 0.8rem; border: none; border-radius: 4px; font-size: 1rem; font-weight: 600; cursor: pointer;
+}
+.btn-save { background-color: var(--secondary-color); color: var(--white); }
+.btn-clear { background-color: #ccc; color: var(--dark-gray); }

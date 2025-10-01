@@ -6,9 +6,11 @@
     <title>Enciclopédia Botânica</title>
     <meta name="description" content="Consulte e contribua para uma enciclopédia de plantas.">
     <link rel="stylesheet" href="style.css">
-    <link href="https://fonts.googleapis.com/css2?family=Merriweather:wght@400;700&family=Roboto:wght@400;500&display=swap" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Lora:wght@400;700&family=Lato:wght@400;700&display=swap" rel="stylesheet">
 </head>
 <body>
+    <div id="notification" class="notification"></div>
+
     <nav class="navbar">
         <div class="container">
             <a href="#" class="brand">🌿 Enciclopédia Botânica</a>
@@ -20,16 +22,16 @@
             <section class="plantas-section">
                 <div class="header-section">
                     <h2>Consulte o Acervo</h2>
-                    <input type="search" id="search-input" placeholder="Buscar por nome popular, científico, família...">
+                    <input type="search" id="search-input" placeholder="Buscar por nome, família...">
                 </div>
                 <div id="plantas-grid">
                     </div>
             </section>
 
             <aside class="form-section">
-                <h2>Adicionar Nova Planta</h2>
-                <p>Contribua com uma nova planta para a enciclopédia.</p>
+                <h2 id="form-title">Adicionar Nova Planta</h2>
                 <form id="planta-form">
+                    <input type="hidden" id="planta-id">
                     <div class="form-group">
                         <label for="nome_popular">Nome Popular</label>
                         <input type="text" id="nome_popular" required>
@@ -48,19 +50,21 @@
                     </div>
                     <div class="form-group">
                         <label for="cuidados">Instruções de Cuidado</label>
-                        <textarea id="cuidados" rows="4" required></textarea>
+                        <textarea id="cuidados" rows="5" required></textarea>
                     </div>
                     <div class="form-buttons">
-                        <button type="submit" class="btn-save">Adicionar à Enciclopédia</button>
-                        <button type="button" class="btn-clear" id="clear-btn">Limpar</button>
+                        <button type="submit" class="btn-save">Salvar</button>
+                        <button type="button" class="btn-clear" id="clear-btn">Cancelar Edição</button>
                     </div>
                 </form>
             </aside>
         </div>
     </main>
-
-    <footer class="container">
-        <p>Trabalho Final de Frontend e Backend &copy; 2025 - Nomes do Trio</p>
+    
+    <footer class="footer">
+        <div class="container">
+            <p>Trabalho Final de Frontend e Backend &copy; 2025 - Desenvolvido pelo Trio</p>
+        </div>
     </footer>
     
     <script src="script.js"></script>

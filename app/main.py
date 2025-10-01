@@ -1,3 +1,4 @@
+# app/main.py
 from fastapi import FastAPI, Depends, HTTPException
 from sqlalchemy.orm import Session
 from fastapi.middleware.cors import CORSMiddleware
@@ -5,7 +6,7 @@ from typing import List
 from . import models, schemas
 from .database import engine, SessionLocal
 
-# --- LÓGICA DE SEEDING (Banco Pré-Cadastrado) ---
+# --- LÓGICA DE SEEDING (Banco Pré-Cadastrado SEM FOTO) ---
 def seed_db():
     db = SessionLocal()
     try:
@@ -50,8 +51,7 @@ def get_db():
     finally:
         db.close()
 
-# --- ENDPOINTS PÚBLICOS DA ENCICLOPÉDIA ---
-
+# --- ENDPOINTS PÚBLICOS (NÃO MUDAM) ---
 @app.post("/plantas/", response_model=schemas.Planta, status_code=201, tags=["Enciclopédia"])
 def create_planta(planta: schemas.PlantaCreate, db: Session = Depends(get_db)):
     db_planta = models.Planta(**planta.model_dump())
@@ -65,6 +65,7 @@ def read_plantas(skip: int = 0, limit: int = 100, db: Session = Depends(get_db))
     plantas = db.query(models.Planta).order_by(models.Planta.id).offset(skip).limit(limit).all()
     return plantas
 
+# ... (o resto dos endpoints GET por ID, PUT e DELETE continuam exatamente iguais) ...
 @app.get("/plantas/{planta_id}", response_model=schemas.Planta, tags=["Enciclopédia"])
 def read_planta(planta_id: int, db: Session = Depends(get_db)):
     db_planta = db.query(models.Planta).filter(models.Planta.id == planta_id).first()
@@ -78,7 +79,7 @@ def update_planta(planta_id: int, planta_update: schemas.PlantaUpdate, db: Sessi
     if db_planta is None:
         raise HTTPException(status_code=404, detail="Planta não encontrada na enciclopédia")
     
-    update_data = planta_update.model_dump()
+    update_data = planta_update.model_dump(exclude_unset=True)
     for key, value in update_data.items():
         setattr(db_planta, key, value)
         

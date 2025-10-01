@@ -1,4 +1,5 @@
 from pydantic import BaseModel, ConfigDict
+from typing import Optional
 
 class PlantaBase(BaseModel):
     nome_popular: str
@@ -6,6 +7,8 @@ class PlantaBase(BaseModel):
     familia: str
     origem: str
     cuidados: str
+
+# ... (o resto do arquivo fica igual)
 
 class PlantaCreate(PlantaBase):
     pass
